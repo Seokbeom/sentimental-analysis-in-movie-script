@@ -4,7 +4,7 @@ Created on Sun May  6 13:26:15 2018
 
 @author: KIM
 """
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 from string import ascii_uppercase
 import time
 import os
@@ -36,26 +36,26 @@ prefix_list.append('0')
 
 os.makedirs('raw_script', exist_ok=True)
 
-#with ThreadPoolExecutor(max_workers=4) as executor:
-#    for prefix in prefix_list:
-        #executor.submit(sc.work, prefix)
-        
-for prefix in prefix_list:
-    sc.work(prefix)
+with ThreadPoolExecutor(max_workers=4) as executor:
+    futures = []
+    for prefix in prefix_list:
+        futures.append(executor.submit(sc.work, prefix))
+    
+    result = wait(futures)
+    print(result)
 
 get_script_time = time.time()
 print('end -', get_script_time-start_time, 'sec')
-
 """
 Preprocessing
 """
-
+"""
 start_time = time.time()
 os.makedirs('score', exist_ok=True)
 filepath_list = os.listdir('raw_script')
-for filepath in filepath_list:
+for filepath in filepath_list[550:]:
     preprocessing.work(filepath)
-
+"""
 """
 with ThreadPoolExecutor(max_workers=4) as executor:
     for filepath in filepath_list:
