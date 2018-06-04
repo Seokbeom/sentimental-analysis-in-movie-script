@@ -73,6 +73,7 @@ def get_movie_score(driver, movie_title):
                     return score
             except:
                 pass
+    print(movie_title, 'You have to find score for this movie by yourself (refer- : https://www.imdb.com)')
     return 0
 
 def get_movie_script(driver, script_url):

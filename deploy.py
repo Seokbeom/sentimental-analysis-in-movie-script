@@ -28,9 +28,7 @@ def make_deploy_data(filename):
     for idx in range(len(scores)-50):
         x_deploy.append(scores[idx:idx+50])
         y_deploy.append(scores[idx+50])
-    print(np.array(scores).shape)
-    print(np.array(x_deploy).shape)
-    print(np.array(y_deploy).shape)
+
     x_deploy = np.array(x_deploy).reshape((len(x_deploy), 50, 2)).astype(np.float)
     y_deploy = np.array(y_deploy).reshape((len(y_deploy), 2)).astype(np.float)
     
@@ -39,13 +37,8 @@ def make_deploy_data(filename):
 def evaluation(title, actual, predict, image=True):
     actual_pos, actual_neg = np.hsplit(actual, 2)
     predict_pos, predict_neg = np.hsplit(predict, 2)
-    
-    rmse_pos = rmse(actual_pos, predict_pos)
-    rmse_neg = rmse(actual_neg, predict_neg)
-    rmse_avg = (rmse_pos + rmse_neg) / 2
-    cosine_pos = cosine(actual_pos, predict_pos)
-    cosine_neg = cosine(actual_neg, predict_neg)
-    cosine_avg = (cosine_pos + cosine_neg) / 2
+    rmse_avg = rmse(actual.reshape(actual.shape[0]*2,1), predict.reshape(predict.shape[0]*2,1))
+    cosine_avg = cosine(actual.reshape(actual.shape[0]*2,1), predict.reshape(predict.shape[0]*2,1))
     cosine_avg = 1 - cosine_avg
 
     if image:
@@ -89,6 +82,8 @@ def deploy(import_model = '', image = True):
     else:
         model = load_model('lstm_model.h5')
     
+    rmse_avg = 0
+    cosine_avg = 0
     deploy_file_list = os.listdir('./deploy')
     for filename in deploy_file_list :
         x_deploy, y_deploy = make_deploy_data(filename)
@@ -96,3 +91,11 @@ def deploy(import_model = '', image = True):
         
         result = evaluation(filename, predictions, y_deploy, image=image)
         print(filename, result[0], result[1])
+        
+        rmse_avg += result[0]
+        cosine_avg += result[1]
+        
+    rmse_avg /= len(deploy_file_list)
+    cosine_avg /= len(deploy_file_list)
+    
+    print('Avg rmse:', rmse_avg, 'Avg Cos:', cosine_avg)
