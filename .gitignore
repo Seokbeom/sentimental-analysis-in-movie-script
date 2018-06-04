@@ -1,4 +1,8 @@
-raw_script/*
-graph/*
-norm/*
-score/*
+raw_script
+score
+graph
+norm
+training
+test
+deploy
+deploy_graph

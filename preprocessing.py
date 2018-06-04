@@ -57,9 +57,12 @@ def savitzky_golay_filter(filepath, image=False):
     
     with codecs.open('./score/'+filepath, 'r') as f:
         data = f.read()
-    data= data.split('\n')
+    data = data.split('\n')
     
     score_arr = []
+    if len(data) <= 50:
+        return
+    
     for score in data:
         try:
             pos, neg = score.split(' ')
@@ -109,14 +112,15 @@ def savitzky_golay_filter(filepath, image=False):
 
     #Min-Max Scaling
     scaler = MinMaxScaler(feature_range=(0,1))
-    norm_senti_score = scaler.fit_transform(np.array([pos_filter, neg_filter]).reshape(pos_filter.shape[0]*2, 1)).reshape(pos_filter.shape[0], 2)
-    
+    norm_pos = scaler.fit_transform(pos_filter.reshape((pos_filter.shape[0], 1)))
+    norm_neg = scaler.fit_transform(neg_filter.reshape((neg_filter.shape[0], 1)))
+
     #save normalized data
     with codecs.open('./norm/%s.txt' % filepath.split('.txt')[0], 'w') as f:
-        for score in norm_senti_score :
-            f.write('%f %f\n' % (score[0], score[1]))
+        for idx in range(len(norm_pos)):
+            f.write('%f %f\n' % (norm_pos[idx], norm_neg[idx]))
 
-def work(script_filepath):
+def work(script_filepath, image=False):
     print(script_filepath)
     
     # 불필요한 문자, 공백 제거
@@ -134,7 +138,9 @@ def work(script_filepath):
             script_list[idx]= ' '.join(list(filter(lambda w: not w.lower() in stops, script_list[idx].split())))
             
             idx += 1
-    
+    if len(script_list) < 5:
+        split_line(script_filepath)
+        return
     # get sentimental score
     # 20 line을 1 window로 만든다.
     # ToDo: N line to 1 window 에 적절한 N 구하기
@@ -151,5 +157,25 @@ def work(script_filepath):
             f.write('%f %f\n' % (window_senti[0], window_senti[1]))
 
     # normalize(savitzky-golay-filtering with min-max-norm)
-    savitzky_golay_filter(script_filepath, image=True)
+    savitzky_golay_filter(script_filepath, image=image)
     
+def split_line(script_filepath):
+    # script가 한줄로 되어있는 파일을 다시 나눔
+    with codecs.open('./raw_script/'+script_filepath, 'r', 'utf-8', errors='ignore') as f:
+        script = f.read()
+    script = script.replace('  ', '\n')
+    
+    script_list = script.split('\n')
+    
+    idx = 0
+    while idx < len(script_list):
+        script_list[idx] = script_list[idx].strip()
+        if script_list[idx] == '':
+            script_list.pop(idx)
+        else:
+            idx += 1
+            
+    with codecs.open('./raw_script/'+script_filepath, 'w', 'utf-8') as f:
+        for script in script_list:
+            f.write(script+'\n')
+    work(script_filepath)

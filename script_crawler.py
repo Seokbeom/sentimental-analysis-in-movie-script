@@ -73,6 +73,7 @@ def get_movie_score(driver, movie_title):
                     return score
             except:
                 pass
+    return 0
 
 def get_movie_script(driver, script_url):
     

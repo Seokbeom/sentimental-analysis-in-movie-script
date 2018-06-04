@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun May  6 13:26:15 2018
-
-@author: KIM
-"""
 from concurrent.futures import ThreadPoolExecutor, wait
 from string import ascii_uppercase
 import time
 import os
 import script_crawler as sc
 import preprocessing
+import ml
+import deploy
 
 """
 1. IMSDB에서 영화 목록 가져오기
@@ -41,26 +38,32 @@ with ThreadPoolExecutor(max_workers=4) as executor:
     for prefix in prefix_list:
         futures.append(executor.submit(sc.work, prefix))
     
-    result = wait(futures)
-    print(result)
+    wait(futures)
 
 get_script_time = time.time()
 print('end -', get_script_time-start_time, 'sec')
+
 """
 Preprocessing
 """
-"""
 start_time = time.time()
 os.makedirs('score', exist_ok=True)
+os.makedirs('norm', exist_ok=True)
+os.makedirs('graph', exist_ok=True)
 filepath_list = os.listdir('raw_script')
-for filepath in filepath_list[550:]:
-    preprocessing.work(filepath)
-"""
-"""
-with ThreadPoolExecutor(max_workers=4) as executor:
-    for filepath in filepath_list:
-        executor.submit(preprocessing.work,filepath)
 
+for filepath in filepath_list:
+    preprocessing.work(filepath, image=False)
 end_time = time.time()
 print(end_time-start_time,'sec')
+
 """
+keras model configure
+"""
+os.makedirs('training', exist_ok=True)
+os.makedirs('test', exist_ok=True)
+os.makedirs('deploy', exist_ok=True)
+os.makedirs('deploy_graph', exist_ok=True)
+ml.classify_data() # classify training, test, deploy data
+model = ml.random_search()
+deploy.deploy(model, image=False)
